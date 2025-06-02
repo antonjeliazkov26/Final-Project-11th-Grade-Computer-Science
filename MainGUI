@@ -1,0 +1,128 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+
+public class MainGUI {
+    private JFrame frame;
+    private DefaultListModel<Recipe> listModel;
+    private JList<Recipe> recipeList;
+    private RecipeManager manager;
+    private final String DATA_FILE = "recipes.dat";
+
+    public MainGUI() {
+        manager = new RecipeManager();
+        manager.loadRecipes(DATA_FILE);
+        initUI();
+    }
+
+    private void initUI() {
+        frame = new JFrame("Personal Recipe Manager");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 400);
+
+        listModel = new DefaultListModel<>();
+        manager.getRecipes().forEach(listModel::addElement);
+
+        recipeList = new JList<>(listModel);
+        JScrollPane scrollPane = new JScrollPane(recipeList);
+
+        JButton addBtn = new JButton("Add");
+        JButton editBtn = new JButton("Edit");
+        JButton deleteBtn = new JButton("Delete");
+
+        addBtn.addActionListener(e -> addRecipe());
+        editBtn.addActionListener(e -> editRecipe());
+        deleteBtn.addActionListener(e -> deleteRecipe());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(addBtn);
+        buttonPanel.add(editBtn);
+        buttonPanel.add(deleteBtn);
+
+        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
+        frame.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+        frame.setVisible(true);
+    }
+
+    private void addRecipe() {
+        Recipe recipe = promptRecipe(null);
+        if (recipe != null) {
+            manager.addRecipe(recipe);
+            listModel.addElement(recipe);
+            manager.saveRecipes(DATA_FILE);
+        }
+    }
+
+    private void editRecipe() {
+        int index = recipeList.getSelectedIndex();
+        if (index >= 0) {
+            Recipe existing = listModel.get(index);
+            Recipe updated = promptRecipe(existing);
+            if (updated != null) {
+                manager.updateRecipe(index, updated);
+                listModel.set(index, updated);
+                manager.saveRecipes(DATA_FILE);
+            }
+        }
+    }
+
+    private void deleteRecipe() {
+        int index = recipeList.getSelectedIndex();
+        if (index >= 0) {
+            Recipe recipe = listModel.get(index);
+            manager.removeRecipe(recipe);
+            listModel.remove(index);
+            manager.saveRecipes(DATA_FILE);
+        }
+    }
+
+    private Recipe promptRecipe(Recipe existing) {
+        JTextField nameField = new JTextField();
+        JTextField ingredientsField = new JTextField();
+        JTextField stepsField = new JTextField();
+        JTextField timeField = new JTextField();
+        JTextField difficultyField = new JTextField();
+        JTextField categoryField = new JTextField();
+
+        if (existing != null) {
+            nameField.setText(existing.getName());
+            ingredientsField.setText(String.join(",", existing.getIngredients()));
+            stepsField.setText(existing.getSteps());
+            timeField.setText(String.valueOf(existing.getTime()));
+            difficultyField.setText(existing.getDifficulty());
+            categoryField.setText(existing.getCategory());
+        }
+
+        JPanel panel = new JPanel(new GridLayout(6, 2));
+        panel.add(new JLabel("Name:")); panel.add(nameField);
+        panel.add(new JLabel("Ingredients (comma separated):")); panel.add(ingredientsField);
+        panel.add(new JLabel("Steps:")); panel.add(stepsField);
+        panel.add(new JLabel("Time (minutes):")); panel.add(timeField);
+        panel.add(new JLabel("Difficulty:")); panel.add(difficultyField);
+        panel.add(new JLabel("Category:")); panel.add(categoryField);
+
+        int result = JOptionPane.showConfirmDialog(frame, panel, existing == null ? "Add Recipe" : "Edit Recipe", JOptionPane.OK_CANCEL_OPTION);
+
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                String name = nameField.getText();
+                java.util.List<String> ingredients = Arrays.asList(ingredientsField.getText().split(","));
+                String steps = stepsField.getText();
+                int time = Integer.parseInt(timeField.getText());
+                String difficulty = difficultyField.getText();
+                String category = categoryField.getText();
+
+                return new Recipe(name, ingredients, steps, time, difficulty, category);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(frame, "Invalid input!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MainGUI::new);
+    }
+}
