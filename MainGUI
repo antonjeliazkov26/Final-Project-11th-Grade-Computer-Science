@@ -1,4 +1,4 @@
-mport javax.swing.*;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -23,6 +23,13 @@ public class MainGUI {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(700, 500);
         frame.setLayout(new BorderLayout());
+
+        JLabel titleLabel = new JLabel("Personal Recipe Manager", JLabel.CENTER);
+        titleLabel.setFont(new Font("Serif", Font.BOLD, 28));
+        titleLabel.setForeground(new Color(70, 130, 180));
+        titleLabel.setOpaque(true);
+        titleLabel.setBackground(new Color(230, 240, 250));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new FlowLayout());
@@ -89,7 +96,13 @@ public class MainGUI {
         buttonPanel.add(editBtn);
         buttonPanel.add(deleteBtn);
 
-        frame.getContentPane().add(topPanel, BorderLayout.NORTH);
+        JPanel northPanel = new JPanel();
+        northPanel.setLayout(new BoxLayout(northPanel, BoxLayout.Y_AXIS));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        northPanel.add(titleLabel);
+        northPanel.add(topPanel);
+
+        frame.getContentPane().add(northPanel, BorderLayout.NORTH);
         frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
         frame.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
@@ -135,7 +148,6 @@ public class MainGUI {
         JTextField timeField = new JTextField();
         JTextField difficultyField = new JTextField();
         JTextField categoryField = new JTextField();
-        JTextField descriptionField = new JTextField();
 
         if (existing != null) {
             nameField.setText(existing.getName());
@@ -144,33 +156,41 @@ public class MainGUI {
             timeField.setText(String.valueOf(existing.getTime()));
             difficultyField.setText(existing.getDifficulty());
             categoryField.setText(existing.getCategory());
-            descriptionField.setText(existing.getDescription());
         }
 
-        JPanel panel = new JPanel(new GridLayout(7, 2));
+        JPanel panel = new JPanel(new GridLayout(6, 2));
         panel.add(new JLabel("Name:")); panel.add(nameField);
         panel.add(new JLabel("Ingredients (comma separated):")); panel.add(ingredientsField);
         panel.add(new JLabel("Steps:")); panel.add(stepsField);
         panel.add(new JLabel("Time (minutes):")); panel.add(timeField);
         panel.add(new JLabel("Difficulty:")); panel.add(difficultyField);
         panel.add(new JLabel("Category:")); panel.add(categoryField);
-        panel.add(new JLabel("Description:")); panel.add(descriptionField);
 
         int result = JOptionPane.showConfirmDialog(frame, panel, existing == null ? "Add Recipe" : "Edit Recipe", JOptionPane.OK_CANCEL_OPTION);
 
         if (result == JOptionPane.OK_OPTION) {
             try {
-                String name = nameField.getText();
-                List<String> ingredients = Arrays.asList(ingredientsField.getText().split(","));
-                String steps = stepsField.getText();
-                int time = Integer.parseInt(timeField.getText());
-                String difficulty = difficultyField.getText();
-                String category = categoryField.getText();
-                String description = descriptionField.getText();
+                String name = nameField.getText().trim();
+                String ingredientsText = ingredientsField.getText().trim();
+                String steps = stepsField.getText().trim();
+                String timeText = timeField.getText().trim();
+                String difficulty = difficultyField.getText().trim();
+                String category = categoryField.getText().trim();
 
-                return new Recipe(name, ingredients, steps, time, difficulty, category, description);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(frame, "Invalid input!", "Error", JOptionPane.ERROR_MESSAGE);
+                if (name.isEmpty() || ingredientsText.isEmpty() || steps.isEmpty() || timeText.isEmpty() || difficulty.isEmpty() || category.isEmpty()) {
+                    throw new IllegalArgumentException("All fields must be filled!");
+                }
+
+                int time = Integer.parseInt(timeText);
+                if (time <= 0) throw new NumberFormatException();
+
+                List<String> ingredients = Arrays.asList(ingredientsText.split(","));
+
+                return new Recipe(name, ingredients, steps, time, difficulty, category);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Time must be a positive number.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException e) {
+                JOptionPane.showMessageDialog(frame, e.getMessage(), "Missing Fields", JOptionPane.ERROR_MESSAGE);
             }
         }
         return null;
