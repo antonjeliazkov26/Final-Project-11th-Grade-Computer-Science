@@ -7,7 +7,7 @@ public class Recipe extends RecipeItem {
     private String difficulty;
     private String description;
 
-    public Recipe(String name, List<String> ingredients, String steps, int time, String difficulty, String category, String description) {
+    public Recipe(String name, List<String> ingredients, String steps, int time, String difficulty, String category) {
         super(name, category);
         this.ingredients = ingredients;
         this.steps = steps;
